@@ -1,0 +1,78 @@
+---
+- name: Find latest stable version
+  uri:
+    url: https://dl.k8s.io/release/stable.txt
+    return_content: yes
+  register: stable_version
+  when: kubeadm_version == "latest"
+
+- name: Set version to download when latest stable version
+  set_fact:
+    kubeadm_download_version: "{{ stable_version.content }}"
+  when: kubeadm_version == "latest"
+
+- name: Set version to download if using custom version
+  set_fact:
+    kubeadm_download_version: "{{ kubeadm_version }}"
+  when: kubeadm_version != "latest"
+
+- name: Set version to download if using custom version and missing v prefix
+  set_fact:
+    kubeadm_download_version: "v{{ kubeadm_version }}"
+  when:
+    - kubeadm_version != "latest"
+    - "'v' not in kubeadm_version"
+
+- name: Set download URL
+  set_fact:
+    kubeadm_download_url: "https://dl.k8s.io/release/{{ kubeadm_download_version }}/bin/linux/amd64/kubeadm"
+
+- name: Set download directory if install only for the user
+  set_fact:
+    kubeadm_download_dir: "{{ ansible_user_dir }}/bin"
+  when: not kubeadm_for_all_users | bool
+
+- name: Set download directory for all users to use
+  set_fact:
+    kubeadm_download_dir: "/usr/local/bin"
+  when: kubeadm_for_all_users | bool
+
+- name: Create bin directory in users home if necessary for local install
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/bin"
+    state: directory
+    mode: 0755
+  when: not kubeadm_for_all_users | bool
+
+- name: Download kubeadm
+  uri:
+    url: "{{ kubeadm_download_url }}"
+    dest: "{{ kubeadm_download_dir }}/kubeadm"
+    follow_redirects: all
+    status_code: [200, 304]
+    mode: 0755
+
+- name: Configure autocompletion for the user only
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_user_dir }}/.{{ command_shell | lower }}rc"
+    regexp: '^source <(kubeadm completion {{ command_shell | lower }})'
+    line: "source <(kubeadm completion {{ command_shell | lower }})"
+  when: not kubeadm_for_all_users
+
+- name: Set global profile file for bash
+  set_fact:
+    global_profile_file: /etc/profile
+  when: kubeadm_for_all_users | bool and command_shell | lower == "bash"
+
+- name: Set global profile file for zsh
+  set_fact:
+    global_profile_file: /etc/zshenv
+  when: kubeadm_for_all_users | bool and command_shell | lower == "zsh"
+
+- name: Configure autocompletion for all users
+  ansible.builtin.lineinfile:
+    path: "{{ global_profile_file }}"
+    regexp: '^source <(kubeadm completion {{ command_shell | lower }})'
+    line: "source <(kubeadm completion {{ command_shell | lower }})"
+  when: kubeadm_for_all_users
+  become: yes

@@ -1,0 +1,5 @@
+---
+kubeadm_version: latest
+kubeadm_for_all_users: true
+
+command_shell: bash

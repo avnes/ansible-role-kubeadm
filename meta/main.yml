@@ -1,0 +1,36 @@
+galaxy_info:
+  role_name: kubeadm
+  author: avnes
+  description: Will install kubeadm
+  company:
+
+  license: license (MIT)
+
+  min_ansible_version: 2.11
+
+  platforms:
+  - name: Fedora
+    versions:
+    - 34
+    - 34
+  - name: Ubuntu
+    versions:
+    - bionic
+    - cosmic
+    - disco
+    - eoan
+    - focal
+    - groovy
+    - hirsute
+    - impish
+  - name: EL
+    versions:
+    - 8
+
+  galaxy_tags:
+  - kubernetes
+  - k8s
+  - cli
+  - kubeadm
+
+dependencies: []
