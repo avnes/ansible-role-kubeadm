@@ -17,8 +17,9 @@ jobs:
         run: "curl -sSL https://install.python-poetry.org | python3 -"
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
-      - name: Create ephemeral requirements.txt for pip
-        run: "cd ${{ github.repository }} && $HOME/.local/bin/poetry export --dev --output requirements.txt"
+          python-version: "3.13"
+          cache: poetry
+      #- name: Create ephemeral requirements.txt for pip
+      #  run: "cd ${{ github.repository }} && $HOME/.local/bin/poetry export --dev --output requirements.txt"
       - name: Run Molecule test case
         uses: robertdebock/molecule-action@6.0.1
